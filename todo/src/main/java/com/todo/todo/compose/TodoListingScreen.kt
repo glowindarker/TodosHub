@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.material.Scaffold
@@ -19,6 +21,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -35,6 +38,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.todo.todo.R
+import com.todo.todo.utils.FAILED_TO_ADD_TODO
 import com.todo.todo.viewmodel.TodoListingViewModel
 
 
@@ -44,9 +48,18 @@ fun TodoListingScreen(
     viewModel: TodoListingViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()//need to check with fc code
+
+    LaunchedEffect(Unit){
+        viewModel.fetchTodos()
+    }
+
     TodoContent(
         state = { state },
-        navController = navController
+        navController = navController,
+        onDismiss = {
+            viewModel.dismissErrorPopup()
+        },
+        onSearchQueryChange = {viewModel.onSearchQueryChange(it)}
     )
 }
 
@@ -55,8 +68,12 @@ fun TodoListingScreen(
 private fun TodoContent(
     state: () -> TodoListingViewModel.UiState,
     navController: NavHostController,
+    onDismiss: () -> Unit,
+    onSearchQueryChange:(String)->Unit
 ) {
     Scaffold(
+        modifier = Modifier.background(color = Color.White),
+        backgroundColor = Color.White,
         topBar = {
             TopAppBar(title = { Text(text = stringResource(id = R.string.todo_list)) })
         },
@@ -67,12 +84,11 @@ private fun TodoContent(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.add_todo),
-//                    tint = Purple40//TODO
                 )
             }
         },
         content = { it ->
-            println(it)//TODO-remove
+            println(it)
             if (state().todosList.isNullOrEmpty()) {
                 Text(
                     modifier = Modifier
@@ -83,12 +99,14 @@ private fun TodoContent(
                     style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
                 )
             } else {
-                Column {
+                Column(
+                    modifier = Modifier
+                        .padding(16.dp)
+                ) {
                     TextField(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        value = "", onValueChange = {},
+                            .fillMaxWidth(),
+                        value = state().query, onValueChange = {onSearchQueryChange(it)},
                         placeholder = {
                             Text(
                                 text = "Search your todos",
@@ -104,8 +122,8 @@ private fun TodoContent(
                     )
 
                     LazyColumn {
-                        state().todosList?.let{
-                            items(items = it) {
+                        state().todosList?.let {
+                            items(items = it) {item->
                                 Text(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -115,7 +133,7 @@ private fun TodoContent(
                                             shape = RoundedCornerShape(12.dp)
                                         )
                                         .padding(8.dp),
-                                    text = "Good Morning",
+                                    text = item.todoDesc,
                                     style = TextStyle(
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 16.sp
@@ -124,14 +142,36 @@ private fun TodoContent(
                             }
                         }
                     }
+                    if(state().isError){
+                        ErrorPopup(onDismiss = onDismiss)
+                    }
                 }
             }
         })
 }
 
+@Composable
+private fun ErrorPopup(
+    onDismiss:()->Unit
+){
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = "Error") },
+        text = { Text(text = FAILED_TO_ADD_TODO) },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text(text = "OK")
+            }
+        }
+    )
+}
+
 @Preview
 @Composable
 private fun TodosContentPreview() {
-    TodoContent( navController = NavHostController(LocalContext.current),
-        state = {TodoListingViewModel.UiState()})
+    TodoContent(navController = NavHostController(LocalContext.current),
+        state = { TodoListingViewModel.UiState() },
+        onDismiss = {},
+        onSearchQueryChange = {}
+    )
 }

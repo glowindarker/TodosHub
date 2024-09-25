@@ -33,10 +33,26 @@ class TodoListingViewModel @Inject constructor(
     }
 
 
+    internal fun onSearchQueryChange(text: String) {
+
+    }
+
+    internal fun dismissErrorPopup(){
+        _state.update {
+            it.copy(isError = false)
+        }
+    }
+
+    internal fun showErrorPopup(){
+        _state.update {
+            it.copy(isError = true)
+        }
+    }
 
     data class UiState(
         val isLoading:Boolean = false,
         val query:String ="",
         val todosList:List<TodoEntity>?=null,
+        val isError:Boolean = false
     )
 }
