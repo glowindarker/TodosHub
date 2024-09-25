@@ -15,4 +15,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "TodosHub"
 include(":app")
- 
+include(":todo")
+include(":data")
