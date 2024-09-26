@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,7 +40,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.todo.todo.R
+import com.todo.todo.utils.ERROR
 import com.todo.todo.utils.FAILED_TO_ADD_TODO
+import com.todo.todo.utils.LoadingIndicator
+import com.todo.todo.utils.OK
 import com.todo.todo.viewmodel.TodoListingViewModel
 
 
@@ -47,9 +52,9 @@ fun TodoListingScreen(
     navController: NavHostController,
     viewModel: TodoListingViewModel = hiltViewModel()
 ) {
-    val state by viewModel.state.collectAsState()//need to check with fc code
+    val state by viewModel.state.collectAsState()
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         viewModel.fetchTodos()
     }
 
@@ -59,7 +64,7 @@ fun TodoListingScreen(
         onDismiss = {
             viewModel.dismissErrorPopup()
         },
-        onSearchQueryChange = {viewModel.onSearchQueryChange(it)}
+        onSearchQueryChange = { viewModel.onSearchQueryChange(it) }
     )
 }
 
@@ -69,7 +74,7 @@ private fun TodoContent(
     state: () -> TodoListingViewModel.UiState,
     navController: NavHostController,
     onDismiss: () -> Unit,
-    onSearchQueryChange:(String)->Unit
+    onSearchQueryChange: (String) -> Unit
 ) {
     Scaffold(
         modifier = Modifier.background(color = Color.White),
@@ -89,61 +94,75 @@ private fun TodoContent(
         },
         content = { it ->
             println(it)
-            if (state().todosList.isNullOrEmpty()) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center),
-                    text = stringResource(id = R.string.press_the_button_to_add_a_todo_item),
-                    textAlign = TextAlign.Center,
-                    style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                )
-            } else {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                ) {
-                    TextField(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        value = state().query, onValueChange = {onSearchQueryChange(it)},
-                        placeholder = {
-                            Text(
-                                text = "Search your todos",
-                                style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                            )
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = stringResource(R.string.add_todo),
-                            )
-                        }
-                    )
+            when {
+                state().isLoading -> {
+                    LoadingIndicator()
+                }
 
-                    LazyColumn {
-                        state().todosList?.let {
-                            items(items = it) {item->
+                state().todosList.isNullOrEmpty() -> {
+                    Text(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .wrapContentSize(Alignment.Center),
+                        text = stringResource(id = R.string.press_the_button_to_add_a_todo_item),
+                        textAlign = TextAlign.Center,
+                        style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    )
+                }
+
+                else -> {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                    ) {
+                        TextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .wrapContentHeight(),
+                            value = state().searchQuery,
+                            onValueChange = { onSearchQueryChange(it) },
+                            placeholder = {
                                 Text(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp)
-                                        .background(
-                                            color = Color.LightGray,
-                                            shape = RoundedCornerShape(12.dp)
-                                        )
-                                        .padding(8.dp),
-                                    text = item.todoDesc,
+                                    text = stringResource(id = R.string.search_your_todos),
                                     style = TextStyle(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 16.sp
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Normal
                                     )
                                 )
+                            },
+                            leadingIcon = {
+                                Icon(
+                                    modifier = Modifier.size(20.dp),
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = stringResource(R.string.add_todo),
+                                )
+                            }
+                        )
+
+                        LazyColumn {
+                            state().todosList?.let {
+                                items(items = it) { item ->
+                                    Text(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(8.dp)
+                                            .background(
+                                                color = Color.LightGray,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .padding(8.dp),
+                                        text = item.todoDesc,
+                                        style = TextStyle(
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 16.sp
+                                        )
+                                    )
+                                }
                             }
                         }
-                    }
-                    if(state().isError){
-                        ErrorPopup(onDismiss = onDismiss)
+                        if (state().isError) {
+                            ErrorPopup(onDismiss = onDismiss)
+                        }
                     }
                 }
             }
@@ -152,15 +171,15 @@ private fun TodoContent(
 
 @Composable
 private fun ErrorPopup(
-    onDismiss:()->Unit
-){
+    onDismiss: () -> Unit
+) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Error") },
+        title = { Text(text = ERROR) },
         text = { Text(text = FAILED_TO_ADD_TODO) },
         confirmButton = {
             Button(onClick = onDismiss) {
-                Text(text = "OK")
+                Text(text = OK)
             }
         }
     )
