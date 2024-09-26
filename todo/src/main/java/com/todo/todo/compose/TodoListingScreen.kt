@@ -15,6 +15,7 @@ import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -39,11 +40,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import com.todo.data.model.TodoEntity
 import com.todo.todo.R
 import com.todo.todo.utils.ERROR
 import com.todo.todo.utils.FAILED_TO_ADD_TODO
 import com.todo.todo.utils.LoadingIndicator
 import com.todo.todo.utils.OK
+import com.todo.todo.utils.RESULT
 import com.todo.todo.viewmodel.TodoListingViewModel
 
 
@@ -53,6 +56,15 @@ fun TodoListingScreen(
     viewModel: TodoListingViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.get<Boolean>(RESULT)?.let {
+            if (it) {
+                navController.currentBackStackEntry?.savedStateHandle?.remove<Boolean>(RESULT)
+                viewModel.showErrorPopup()
+            }
+        }
 
     LaunchedEffect(Unit) {
         viewModel.fetchTodos()
@@ -77,18 +89,20 @@ private fun TodoContent(
     onSearchQueryChange: (String) -> Unit
 ) {
     Scaffold(
-        modifier = Modifier.background(color = Color.White),
         backgroundColor = Color.White,
         topBar = {
             TopAppBar(title = { Text(text = stringResource(id = R.string.todo_list)) })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                navController.navigate("create_todo")
-            }) {
+            FloatingActionButton(
+                backgroundColor = MaterialTheme.colors.primary,
+                onClick = {
+                    navController.navigate("create_todo")
+                }) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.add_todo),
+                    tint = Color.White
                 )
             }
         },
@@ -118,6 +132,7 @@ private fun TodoContent(
                         TextField(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(8.dp)
                                 .wrapContentHeight(),
                             value = state().searchQuery,
                             onValueChange = { onSearchQueryChange(it) },
@@ -189,8 +204,20 @@ private fun ErrorPopup(
 @Composable
 private fun TodosContentPreview() {
     TodoContent(navController = NavHostController(LocalContext.current),
-        state = { TodoListingViewModel.UiState() },
+        state = {
+            TodoListingViewModel.UiState(
+                todosList = listOf(
+                    TodoEntity(todoDesc = "Walk 10 mins daily")
+                )
+            )
+        },
         onDismiss = {},
         onSearchQueryChange = {}
     )
+}
+
+@Preview
+@Composable
+private fun ErrorPopupPreview() {
+    ErrorPopup(onDismiss = {})
 }

@@ -6,8 +6,6 @@
     <string name="search_your_todos">Search your todos</string>
     <string name="enter_your_todo">Enter Your TODO</string>
     <string name="please_enter_a_valid_todo">Please enter a Valid TODO</string>
-    <string name="error">Error</string>
     <string name="failed_to_add_todo">Failed to add TODO</string>
-    <string name="dismiss">Dismiss</string>
     <string name="create_todo">Create TODO</string>
 </resources>
