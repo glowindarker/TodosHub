@@ -106,8 +106,7 @@ private fun TodoContent(
                 )
             }
         },
-        content = { it ->
-            println(it)
+        content = {it ->
             when {
                 state().isLoading -> {
                     LoadingIndicator()
@@ -117,7 +116,8 @@ private fun TodoContent(
                     Text(
                         modifier = Modifier
                             .fillMaxSize()
-                            .wrapContentSize(Alignment.Center),
+                            .wrapContentSize(Alignment.Center)
+                            .padding(it),
                         text = stringResource(id = R.string.press_the_button_to_add_a_todo_item),
                         textAlign = TextAlign.Center,
                         style = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Bold)

@@ -64,7 +64,6 @@ private fun CreateTodoContent(
             TopAppBar(title = { Text(text = stringResource(id = R.string.create_todo)) })
         },
         content = { it ->
-            print(it)
             if (state().isLoading) {
                 LoadingIndicator()
             }
@@ -74,7 +73,7 @@ private fun CreateTodoContent(
                     .padding(24.dp)
             ) {
                 TextField(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(it),
                     value = state().enteredTodo,
                     onValueChange = { onTodoValueChange(it) },
                     placeholder = { Text(text = stringResource(R.string.enter_your_todo)) },

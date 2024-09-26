@@ -50,8 +50,16 @@ class TodoListingViewModel @Inject constructor(
             try{
                 todoRepository.fetchTodos().firstOrNull()?.let { todos ->
                     _todos = todos
+
+                    val filteredTodos = if (_searchQuery.value.isNullOrEmpty()) _todos else todos.filter {
+                        it.todoDesc.contains(
+                            _searchQuery.value.orEmpty(),
+                            true
+                        )
+                    }
+
                     _state.update {
-                        it.copy(isLoading = false, todosList = todos)
+                        it.copy(isLoading = false, todosList = filteredTodos)
                     }
                 }
             }catch (exception:Exception){
